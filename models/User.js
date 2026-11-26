@@ -14,6 +14,9 @@ const userSchema = new mongoose.Schema({
   claimedAt: { type: Date, default: null },
   redeemedAt: { type: Date, default: null },
   redeemedBy: { type: String, default: null },
+  cardActivated: { type: Boolean, default: false },
+  activationPhone: { type: String, default: null },
+  activationRef: { type: String, default: null },
 }, { timestamps: true });
 
 module.exports = { User: mongoose.model('User', userSchema) };
