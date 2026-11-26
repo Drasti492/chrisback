@@ -12,6 +12,7 @@ app.use(cors({ origin: origins.includes('*') ? true : origins }));
 app.use(express.json({ limit: '10kb' }));
 
 app.get('/', (req, res) => res.json({ ok: true, service: 'Christmas Giveaway API' }));
+app.get('/health', (req, res) => res.send('ok'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/game', require('./routes/game'));
 
