@@ -31,7 +31,7 @@ function makeCode() {
 const state = (u) => ({
   username: u.username,
   phone: u.phone,
-  branch: u.branch,
+  amountSpent: u.amountSpent,
   spinsUsed: u.spinsUsed,
   spinsLeft: u.prize ? 0 : Math.max(0, G.MAX_SPINS - u.spinsUsed),
   prize: u.prize,
@@ -135,7 +135,7 @@ router.post('/cashier/lookup', admin, async (req, res) => {
     code,
     username: u.username,
     phone: u.phone,
-    branch: u.branch,
+    amountSpent: u.amountSpent,
     amount: u.prize,
     redeemed: !!u.redeemedAt,
     redeemedAt: u.redeemedAt,
