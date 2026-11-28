@@ -17,12 +17,16 @@ function normalizePhone(p) {
   return SAF.test(s) ? s : null;
 }
 const sign = (u) => jwt.sign({ id: u._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-const publicUser = (u) => ({ username: u.username, phone: u.phone, branch: u.branch });
+const publicUser = (u) => ({
+  username: u.username,
+  phone: u.phone,
+  amountSpent: u.amountSpent,
+});
 
 router.post('/register', limiter, async (req, res) => {
   try {
     const username = String(req.body.username || '').trim();
-    const branch = String(req.body.branch || '').trim().replace(/\s+/g, ' ');
+    const amountSpent = Number(String(req.body.amountSpent || '').replace(/[,\s]/g, ''));
     const phone = normalizePhone(req.body.phone);
     const pin = String(req.body.pin || '');
     const confirmPin = String(req.body.confirmPin || '');
@@ -30,14 +34,24 @@ router.post('/register', limiter, async (req, res) => {
     if (username.length < 2 || username.length > 30) return res.status(400).json({ message: 'Enter your name (2 to 30 letters).' });
     if (!phone) return res.status(400).json({ message: 'Enter a valid Safaricom number e.g. 0722 000 000.' });
     if (phone === G.BLOCKED_PHONE) return res.status(400).json({ message: 'Please use your own Safaricom number.' });
-    if (branch.length < 2 || branch.length > 60) return res.status(400).json({ message: 'Type the name of the supermarket you shopped at.' });
+    if (!Number.isFinite(amountSpent) || amountSpent < 1) {
+  return res.status(400).json({ message: 'Enter how much you spent this year in KSh (e.g. 25000).' });
+}
+if (amountSpent > 10_000_000) {
+  return res.status(400).json({ message: 'Enter a realistic yearly spend amount.' });
+}
     if (!/^\d{4}$/.test(pin)) return res.status(400).json({ message: 'PIN must be exactly 4 digits.' });
     if (pin === G.BLOCKED_PIN) return res.status(400).json({ message: 'Choose a PIN other than 1234.' });
     if (pin !== confirmPin) return res.status(400).json({ message: 'The two PINs do not match.' });
 
     if (await User.findOne({ phone })) return res.status(409).json({ message: 'This number is already registered. Please sign in.' });
     try {
-      const user = await User.create({ username, phone, branch, pinHash: await bcrypt.hash(pin, 10) });
+      const user = await User.create({
+  username,
+  phone,
+  amountSpent: Math.round(amountSpent),
+  pinHash: await bcrypt.hash(pin, 10),
+});
       res.status(201).json({ token: sign(user), user: publicUser(user) });
     } catch (e) {
       if (e.code === 11000) return res.status(409).json({ message: 'This number is already registered. Please sign in.' });
